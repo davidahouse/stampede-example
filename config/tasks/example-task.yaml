@@ -1,0 +1,5 @@
+id: example-task
+title: Example Task
+taskQueue: execute
+worker:
+  taskCommand: example-task.js

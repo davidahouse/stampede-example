@@ -1,0 +1,60 @@
+version: "3.7"
+services:
+  redis:
+    image: redis
+    container_name: stampede-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./redis:/data
+    entrypoint: redis-server --appendonly yes
+  postgres:
+    image: postgres
+    container_name: stampede-postgres
+    ports:
+      - "54321:5432"
+    volumes:
+      - ./db:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  stampede-server:
+    image: davidahouse/stampede-server
+    container_name: stampede-server
+    volumes:
+      - ./config:/var/stampede-config
+    environment:
+      stampede_scm: github
+      stampede_githubAppID: "${GITHUB_APP_ID}"
+      stampede_githubAppPEM: "${GITHUB_PEM}"
+      stampede_githubHost: https://api.github.com
+      stampede_redisHost: stampede-redis
+      stampede_redisPort: 6379
+      stampede_dbHost: stampede-postgres
+      stampede_dbPort: 5432
+      stampede_logLevel: verbose
+    tty: true
+    stdin_open: true
+    links:
+      - redis
+    ports:
+      - "7766:7766"
+    expose:
+      - 7766
+  stampede-worker:
+    image: davidahouse/stampede-worker
+    volumes:
+      - ./scripts:/var/stampede-scripts
+    environment:
+      stampede_stampedeScriptPath: /var/stampede-scripts
+      stampede_nodeName: stampede-worker_1
+      stampede_workerName: execute
+      stampede_workspaceRoot: /var/stampede/logs
+      stampede_taskQueue: execute
+      stampede_redisHost: stampede-redis
+      stampede_redisPort: 6379
+    tty: true
+    stdin_open: true
+    links:
+      - redis
+  smee:
+    image: deltaprojects/smee-client
+    command: -u "${SMEE_URL}" -t http://stampede-server:7766/github
