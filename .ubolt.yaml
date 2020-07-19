@@ -1,0 +1,44 @@
+up:
+  command: docker-compose up -d
+down:
+  command: docker-compose down
+erase:
+  commands:
+    - docker container rm stampede-example-redis
+    - docker container rm stampede-example-postgres
+    - docker container rm stampede-example-server
+    - docker container rm stampede-example-worker
+    - docker container rm stampede-example-smee
+    - rm redis/appendonly.aof
+    - rm redis/dump.rdb
+    - rm -rf db/data
+postgres:
+  command: docker exec -it stampede-example-postgres psql -U postgres -d stampede
+  description: Connect to postgres db
+redis:
+  command: docker exec -it stampede-example-redis redis-cli
+  description: Connect to redis
+postgreslogs:
+  command: docker logs stampede-example-postgres $1
+  description: Show logs for the server container
+redislogs:
+  command: docker logs stampede-example-redis $1
+  description: Show logs for the server container
+serverlogs:
+  command: docker logs stampede-example-server $1
+  description: Show logs for the server container
+workerlogs:
+  command: docker logs stampede-example-worker $1
+  description: Show logs for the worker container
+smeelogs:
+  command: docker logs stampede-example-smee $1
+  description: Show logs for the server container
+portal:
+  command: open http://localhost:7766
+  description: open stampede ui in safari
+serverssh:
+  command: docker exec -it stampede-example-server /bin/bash
+  description: Ssh into the server container
+workerssh:
+  command: docker exec -it stampede-example-worker /bin/bash
+  description: Ssh into the test container

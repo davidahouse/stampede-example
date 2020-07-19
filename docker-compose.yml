@@ -2,7 +2,7 @@ version: "3.7"
 services:
   redis:
     image: redis
-    container_name: stampede-redis
+    container_name: stampede-example-redis
     ports:
       - "6380:6379"
     volumes:
@@ -10,15 +10,15 @@ services:
     entrypoint: redis-server --appendonly yes
   postgres:
     image: postgres
-    container_name: stampede-postgres
+    container_name: stampede-example-postgres
     ports:
       - "54321:5432"
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - ./db/data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
   stampede-server:
     image: davidahouse/stampede-server
-    container_name: stampede-server
+    container_name: stampede-example-server
     volumes:
       - ./config:/var/stampede-config
     environment:
@@ -26,11 +26,12 @@ services:
       stampede_githubAppID: "${GITHUB_APP_ID}"
       stampede_githubAppPEM: "${GITHUB_PEM}"
       stampede_githubHost: https://api.github.com
-      stampede_redisHost: stampede-redis
+      stampede_redisHost: stampede-example-redis
       stampede_redisPort: 6379
-      stampede_dbHost: stampede-postgres
+      stampede_dbHost: stampede-example-postgres
       stampede_dbPort: 5432
       stampede_logLevel: verbose
+      stampede_adminPassword: example
     tty: true
     stdin_open: true
     links:
@@ -41,15 +42,16 @@ services:
       - 7766
   stampede-worker:
     image: davidahouse/stampede-worker
+    container_name: stampede-example-worker
     volumes:
       - ./scripts:/var/stampede-scripts
     environment:
       stampede_stampedeScriptPath: /var/stampede-scripts
-      stampede_nodeName: stampede-worker_1
+      stampede_nodeName: stampede-example-worker
       stampede_workerName: execute
       stampede_workspaceRoot: /var/stampede/logs
       stampede_taskQueue: execute
-      stampede_redisHost: stampede-redis
+      stampede_redisHost: stampede-example-redis
       stampede_redisPort: 6379
     tty: true
     stdin_open: true
@@ -57,4 +59,5 @@ services:
       - redis
   smee:
     image: deltaprojects/smee-client
-    command: -u "${SMEE_URL}" -t http://stampede-server:7766/github
+    container_name: stampede-example-smee
+    command: -u "${SMEE_URL}" -t http://stampede-example-server:7766/github
